@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recipe Finder</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#6100fe" />
+<link rel="icon" href="favicon.ico" type="image/x-icon" />
+<link rel="apple-touch-icon" sizes="180x180" href="images/1.png" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+<style>
+    :root {
+        --main-color: #2193b0;
+        --main-color2: #6dd5ed;
+    }
+
+    * {
+        box-sizing: border-box;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(to right, var(--main-color), var(--main-color2));
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh; /* Use min-height to allow content to extend */
+        transition: background 0.5s ease;
+        color: white; /* Default text color for body */
+        padding-bottom: 70px; /* Space for the fixed footer */
+    }
+
+    h1 {
+        color: white;
+        margin-top: 30px;
+        margin-bottom: 20px;
+        font-size: 2.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .theme-switcher {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+
+    .theme-button {
+        background: transparent;
+        border: none;
+        font-size: 24px;
+        color: white;
+        cursor: pointer;
+        padding: 5px;
+        transition: transform 0.2s ease;
+    }
+
+    .theme-button:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-list {
+        display: none;
+        position: absolute;
+        right: 0;
+        margin-top: 10px;
+        background: white;
+        padding: 0.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        flex-wrap: wrap;
+        max-width: 200px;
+        gap: 6px;
+        z-index: 100;
+    }
+
+    .theme-list.show {
+        display: flex;
+    }
+
+    .theme-color {
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    /* Form and Input Styles */
+    #searchForm {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        width: 90%;
+        max-width: 500px;
+    }
+
+    #ingredientsInput {
+        flex-grow: 1;
+        padding: 0.7rem;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+
+    #ingredientsInput::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    #ingredientsInput:focus {
+        outline: none;
+        border-color: white;
+    }
+
+    #searchBtn {
+        padding: 0.7rem 1.5rem;
+        background: var(--main-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    #searchBtn:hover {
+        background: var(--main-color2);
+        transform: translateY(-2px);
+    }
+
+    /* Results and Card Styles */
+    #results {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+        padding: 20px;
+        width: 100%;
+        max-width: 1200px;
+    }
+
+    #noResults {
+        color: white;
+        font-size: 1.2rem;
+        margin-top: 20px;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.15); /* Semi-transparent background for cards */
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        width: 300px;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        backdrop-filter: blur(5px); /* Frosted glass effect */
+        -webkit-backdrop-filter: blur(5px); /* For Safari */
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .card-body {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        flex-grow: 1; /* Allows card body to take available space */
+    }
+
+    .card-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: white;
+    }
+
+    .card button {
+        background: var(--main-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.3s ease;
+        margin-top: auto; /* Pushes button to the bottom of the card-body */
+    }
+
+    .card button:hover {
+        background: var(--main-color2);
+    }
+
+    /* Modal Styles */
+    #modal {
+        display: none; /* Hidden by default */
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.7); /* Dark semi-transparent background */
+        justify-content: center;
+        align-items: center;
+    }
+
+    #modalContent {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+        margin: auto;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        width: 90%;
+        max-width: 700px;
+        position: relative;
+        color: white;
+        max-height: 90vh; /* Limit modal height */
+        overflow-y: auto; /* Enable scrolling for modal content */
+        backdrop-filter: blur(10px); /* Frosted glass effect */
+        -webkit-backdrop-filter: blur(10px); /* For Safari */
+    }
+
+    .closeBtn {
+        color: white;
+        font-size: 30px;
+        font-weight: bold;
+        position: absolute;
+        top: 15px;
+        right: 25px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0;
+        transition: transform 0.2s ease;
+    }
+
+    .closeBtn:hover,
+    .closeBtn:focus {
+        color: #ddd;
+        text-decoration: none;
+        transform: scale(1.2);
+    }
+
+    #modalBody h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 2rem;
+    }
+
+    #modalBody img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+        margin: 0 auto 20px auto;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    #modalBody h3 {
+        margin-top: 25px;
+        margin-bottom: 10px;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    #modalBody ul {
+        list-style-type: disc;
+        padding-left: 25px;
+        margin-bottom: 20px;
+    }
+
+    #modalBody ul li {
+        margin-bottom: 5px;
+        line-height: 1.4;
+    }
+
+    #modalBody p {
+        line-height: 1.6;
+        text-align: justify;
+        margin-bottom: 20px;
+    }
+
+    #modalBody a {
+        color: var(--main-color2);
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.3s ease;
+    }
+
+    #modalBody a:hover {
+        color: white;
+    }
+
+    /* Footer */
+    footer {
+        flex-shrink: 0; /* don’t shrink */
+        text-align: center;
+        color: white;
+        font-size: 1rem; /* Slightly smaller font size */
+        padding: 15px 0;
+        background: transparent;
+        position: fixed;
+        width: 100%;
+        bottom: 0;
+        left: 0;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1); /* Subtle shadow on footer */
+    }
+
+    footer a {
+        color: white;
+        text-decoration: underline;
+        font-weight: bold;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        h1 {
+            font-size: 2rem;
+        }
+
+        #searchForm {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #ingredientsInput, #searchBtn {
+            width: 100%;
+        }
+
+        .card {
+            width: 90%; /* Make cards wider on smaller screens */
+        }
+
+        #modalContent {
+            padding: 20px;
+        }
+
+        .closeBtn {
+            font-size: 24px;
+            top: 10px;
+            right: 15px;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="theme-switcher">
+    <button class="theme-button" onclick="toggleThemeMenu()">
+        <i class="fas fa-palette"></i>
+    </button>
+    <div id="themeList" class="theme-list">
+        </div>
+</div>
+
+<h1>Recipe Finder</h1>
+
+<form id="searchForm">
+    <input
+        type="text"
+        id="ingredientsInput"
+        placeholder="Enter ingredients (e.g., chicken, pasta)"
+        required
+    />
+    <button type="submit" id="searchBtn">Search</button>
+</form>
+
+<div id="results"></div>
+<div id="noResults" style="display:none;">No recipes found. Try different ingredients.</div>
+
+<div id="modal">
+    <div id="modalContent">
+        <button class="closeBtn">&times;</button>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<footer>
+    Made with ❤️ by <a href="https://abdelrahmanz.netlify.app/" target="_blank">AbdElRahman</a>
+</footer>
+
+<script>
+    const themes = [
+        ['#4facfe', '#00f2fe'],
+        ['#ff9966', '#ff5e62'],
+        ['#4a00e0', '#8e2de2'],
+        ['#7F00FF', '#E100FF'],
+        ['#56CCF2', '#2F80ED'],
+        ['#43e97b', '#38f9d7'],
+        ['#f953c6', '#b91d73'],
+        ['#30cfd0', '#330867'],
+        ['#f7797d', '#FBD786'],
+        ['#00c3ff', '#ffff1c'],
+        ['#3a7bd5', '#3a6073'],
+        ['#FF512F', '#DD2476'],
+        ['#1D976C', '#93F9B9'],
+        ['#ff6a00', '#ee0979'],
+        ['#2193b0', '#6dd5ed'],
+        ['#cc2b5e', '#753a88'],
+
+        // 7 Dark color themes added:
+        ['#232526', '#1c1c1c'],
+        ['#0f2027', '#203a43'],
+        ['#1c1c1c', '#282828'],
+        ['#232526', '#414345'],
+        ['#000000', '#434343'],
+        ['#141e30', '#243b55'],
+        ['#000428', '#004e92']
+    ];
+
+    const themeList = document.getElementById('themeList');
+    const body = document.body; // Reference to the body element
+
+    themes.forEach(([c1, c2]) => {
+        const colorDiv = document.createElement('div');
+        colorDiv.className = 'theme-color';
+        colorDiv.style.background = `linear-gradient(to right, ${c1}, ${c2})`;
+        colorDiv.onclick = () => applyTheme(c1, c2);
+        themeList.appendChild(colorDiv);
+    });
+
+    function toggleThemeMenu() {
+        themeList.classList.toggle('show');
+    }
+
+    function applyTheme(color1, color2) {
+        document.documentElement.style.setProperty('--main-color', color1);
+        document.documentElement.style.setProperty('--main-color2', color2);
+        body.style.background = `linear-gradient(to right, ${color1}, ${color2})`; // Apply to body directly
+        themeList.classList.remove('show');
+        updateThemeColorMeta(color1);
+    }
+
+    function updateThemeColorMeta(color) {
+        let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (!metaThemeColor) {
+            metaThemeColor = document.createElement('meta');
+            metaThemeColor.setAttribute('name', 'theme-color');
+            document.head.appendChild(metaThemeColor);
+        }
+        metaThemeColor.setAttribute('content', color);
+    }
+
+    // Initialize theme color meta tag on page load
+    updateThemeColorMeta(getComputedStyle(document.documentElement).getPropertyValue('--main-color').trim());
+
+    const searchForm = document.getElementById('searchForm');
+    const ingredientsInput = document.getElementById('ingredientsInput');
+    const resultsDiv = document.getElementById('results');
+    const noResultsDiv = document.getElementById('noResults');
+    const modal = document.getElementById('modal');
+    const modalBody = document.getElementById('modalBody');
+    const closeBtn = modal.querySelector('.closeBtn');
+
+    searchForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const ingredients = ingredientsInput.value.trim();
+        if (!ingredients) {
+            resultsDiv.innerHTML = '';
+            noResultsDiv.textContent = 'Please enter ingredients to search.';
+            noResultsDiv.style.display = 'block';
+            return;
+        }
+
+        resultsDiv.innerHTML = '';
+        noResultsDiv.style.display = 'none';
+
+        const firstIngredient = ingredients.split(',')[0].trim();
+
+        try {
+            const response = await fetch(
+                `https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(firstIngredient)}`
+            );
+            const data = await response.json();
+
+            if (data.meals) {
+                data.meals.forEach((meal) => {
+                    const card = document.createElement('div');
+                    card.classList.add('card'); // Added the 'card' class here
+                    card.innerHTML = `
+                        <img src="${meal.strMealThumb}" alt="${meal.strMeal}" />
+                        <div class="card-body">
+                            <div class="card-title">${meal.strMeal}</div>
+                            <button data-id="${meal.idMeal}">View Recipe</button>
+                        </div>
+                    `;
+                    resultsDiv.appendChild(card);
+                });
+            } else {
+                noResultsDiv.style.display = 'block';
+                noResultsDiv.textContent = 'No recipes found for these ingredients. Try different ones!';
+            }
+        } catch (error) {
+            console.error('Error fetching recipes:', error);
+            noResultsDiv.textContent = 'Error fetching recipes. Please try again later.';
+            noResultsDiv.style.display = 'block';
+        }
+    });
+
+    // Close modal event
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        modalBody.innerHTML = '';
+    });
+
+    // Click outside modal content to close
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+            modalBody.innerHTML = '';
+        }
+    });
+
+    // Delegate click event for dynamic buttons
+    resultsDiv.addEventListener('click', async (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            const mealId = e.target.getAttribute('data-id');
+            if (!mealId) return;
+
+            modalBody.innerHTML = 'Loading...';
+            modal.style.display = 'flex'; // Use flex to center modal content
+
+            try {
+                const res = await fetch(
+                    `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`
+                );
+                const mealData = await res.json();
+                if (mealData.meals && mealData.meals.length > 0) {
+                    const meal = mealData.meals[0];
+
+                    // Extract ingredients and measures
+                    const ingredients = [];
+                    for (let i = 1; i <= 20; i++) {
+                        const ingredient = meal[`strIngredient${i}`];
+                        const measure = meal[`strMeasure${i}`];
+                        if (ingredient && ingredient.trim() !== '') {
+                            ingredients.push(`${measure.trim()} ${ingredient.trim()}`);
+                        }
+                    }
+
+                    modalBody.innerHTML = `
+                        <h2>${meal.strMeal}</h2>
+                        <img src="${meal.strMealThumb}" alt="${meal.strMeal}" />
+                        <h3>Ingredients:</h3>
+                        <ul>${ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
+                        <h3>Instructions:</h3>
+                        <p>${meal.strInstructions}</p>
+                        ${meal.strYoutube ? `<h3>Video Tutorial:</h3><a href="${meal.strYoutube}" target="_blank">Watch on YouTube</a>` : ''}
+                    `;
+                } else {
+                    modalBody.innerHTML = 'Recipe details not found.';
+                }
+            } catch (err) {
+                modalBody.innerHTML = 'Error loading recipe details.';
+                console.error('Error fetching meal details:', err);
+            }
+        }
+    });
+
+    
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(reg => {
+                    console.log('Service Worker registered:', reg.scope);
+                })
+                .catch(err => {
+                    console.log('Service Worker registration failed:', err);
+                });
+        });
+    }
+
+</script>
+
+</body>
+</html>
