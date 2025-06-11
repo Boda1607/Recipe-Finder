@@ -38,7 +38,7 @@ No installation required! Simply open the `index.html` file in your web browser.
 
 ```bash
 # Clone the repository (if applicable)
-git clone https://github.com/your-username/recipe-finder.git
+git clone https://github.com/Boda1607/recipe-finder.git
 cd recipe-finder
 ```
 ## 👨‍💻 Usage
